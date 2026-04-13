@@ -1,8 +1,53 @@
-import  {View, Text, SafeAreaView, StyleSheet, TouchableOpacity, ScrollView, FlatList } from "react-native";
+import React, { useState, useEffect} from "react";
+import  {View, Text, SafeAreaView, StyleSheet, TouchableOpacity, ScrollView, FlatList, Alert } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
 
+const initialHistory = [
+    { id: "1", course: "Web Programming", date: "2026-03-01", status: "Present" },
+    { id: "2", course: "Database System", date: "2026-03-02", status: "Present"},
+]
+
 const Home = () => {
-    const renderItem = ({ item }) => (
+
+    const [historyData, setHistoryData] = useState(initialHistory);
+    const [isCheckedIn, setIsCheckedIn] = useState(false);
+    const [currentTime, setCurrentTime] = useState('Memuat jam ... ');
+
+    useEffect(() => {
+        const timer = setInterval(() => {
+        const timeString = new Date().toLocaleTimeString('id-ID', {
+        hour: '2-digit', minute: '2-digit', second: '2-digit'
+        });
+        setCurrentTime(timeString);
+        }, 1000);
+
+        return () => clearInterval(timer);
+    }, []); 
+
+    // fungsi login absen
+    const handleCheckIn = () => {
+        if (isCheckedIn) {
+            Alert.alert( "Perhatian", "Anda sudah melakukan Check In untuk kelas ini.");
+            return;
+        }
+
+        // 1.buat data presensi baru
+        const newAttendance = {
+        id: Date.now().toString(), // membuat ID unik dari timestamp
+        course: "Mobile Programming",
+        date: new Date().toLocaleDateString('id-ID'), 
+        status: "Present"
+        };
+
+        // 2.masukkan data baru ke urutan paling atas daftar history
+        setHistoryData([newAttendance, ... historyData]);
+
+        // 3.kunci tombol Check In
+        setIsCheckedIn(true);
+        Alert.alert("Sukses", `Berhasil Check In pada pukul ${currentTime}`);
+    };
+
+     const renderItem = ({ item }) => (
         <View style={styles.item}>
 
             <View>
@@ -29,82 +74,57 @@ const Home = () => {
         </View>
     );
 
-    const presentCount = history.filter(item => item.status === "Present").length;
-    const absentCount = history.filter(item => item.status === "Absent").length;
-
     return (
-    <SafeAreaView style={styles.container}>
-        <ScrollView contentContainerStyle={styles.content}>
-        <Text style={styles.title}>Attendance App</Text>
+        <SafeAreaView style={styles.container}>
+            <ScrollView contentContainerStyle={styles.content}>
+                <View style={styles.headerRow}>
+                    <Text style={styles.title}>Attendance App</Text>
+                    <Text style={styles.clockText}>{currentTime}</Text>
+                </View>
 
-        <View style={styles.card}>
-            <View style={styles.icon}>
-                <MaterialIcons name="person" size={40} color="#555" />
-            </View>
-            <View>
-                <Text style={styles.name}>Alyza Septia Anjani</Text>
-                <Text>NIM : 0920240015</Text>
-                <Text>Class : TRPL-2B</Text>
-            </View>
-        </View>
-        <View style={styles.classCard}>
-            <Text style={styles.subtitle}>Today's Class</Text>
-            <Text>Mobile Programming</Text>
-            <Text>08:00 - 10:00</Text>
-            <Text>Lab 3</Text>
+                <View style={styles.card}>
+                    <View style={styles.icon}>
+                        <MaterialIcons name="person" size={48} color="#555" />
+                    </View>
+                    <View>
+                    <Text style={styles.name}>Alyza Septia Anjani</Text>
+                    <Text>NIM : 0920240015</Text>
+                    <Text>Class : TRPL-2B</Text>
+                    </View>
+                </View>
 
-            <TouchableOpacity style={styles.button}>
-                <Text style={styles.buttonText}>CHECK IN</Text>
-            </TouchableOpacity>
-        </View>
-        <View style={styles.classCard}>
-            <Text style={styles.subtitle}>Upcoming Class</Text>
-            <Text>Web Programming</Text>
-            <Text>13:00 - 16:00</Text>
-            <Text>Lab 3</Text>
-        </View>
+                <View style={styles.classCard}>
+                    <Text style={styles.subtitle}>Today's Class</Text>
+                    <Text>Mobile Programming</Text>
+                    <Text>08:00 - 10:00</Text>
+                    <Text>Lab 3</Text>
+                
 
-        <Text style={styles.subtitle}>Attendance Summary</Text>
-        <View style={styles.classCard}>
-            <Text style={styles.present}>Present: {presentCount}</Text>
-            <Text style={styles.absent}>Absent: {absentCount}</Text>
-        </View>
+                    <TouchableOpacity
+                        style={[styles.button, isCheckedIn ? styles.buttonDisabled : styles.buttonActive]}
+                        onPress={handleCheckIn}
+                        disabled={isCheckedIn}
+                    >
+                        <Text style={styles.buttonText}>
+                        {isCheckedIn ? "CHECKED IN" : "CHECK IN"}
+                        </Text>
+                    </TouchableOpacity>
+                </View>
 
-        <Text style={styles.subtitle}>Attendance History</Text>
-            <FlatList
-            data={history}
-            keyExtractor={(item) => item.id}
-            renderItem={renderItem}
-            scrollEnabled={false}
-            />
-        
-        </ScrollView>
-    </SafeAreaView>
+                <View style={styles.classCard}>
+                    <Text style={styles.subtitle}>Attendance History</Text>
+
+                    <FlatList
+                        data={historyData}
+                        keyExtractor={(item) => item.id}
+                        renderItem={renderItem}
+                        scrollEnabled={false}
+                    />
+                </View>
+            </ScrollView>
+        </SafeAreaView>
     );
 };
-
-const history = [
-    {id: "1", course: "Mobile Programming", date: "2026-03-01", status: "Present"},
-    {id: "2", course: "Database System", date: "2026-03-02", status: "Present"},
-    {id: "3", course: "Operating System", date: "2026-03-03", status: "Absent"},
-    {id: "4", course: "Computer Network", date: "2026-03-04", status: "Present"},
-    {id: "5", course: "Artificial Intelligent", date: "2026-03-05", status: "Present"},
-    {id: "6", course: "English Course", date: "2026-03-06", status: "Absent"},
-    {id: "7", course: "Mathematics", date: "2026-03-07", status: "Present"},
-    {id: "8", course: "Computer Network", date: "2026-03-08", status: "Present"},
-    {id: "9", course: "Statistics", date: "2026-03-09", status: "Present"},
-    {id: "10", course: "Management Business Process", date: "2026-03-10", status: "Absent"},
-    {id: "11", course: "Mobile Programming", date: "2026-03-11", status: "Present"},
-    {id: "12", course: "Statistics", date: "2026-03-12", status: "Present"},
-    {id: "13", course: "Operating System", date: "2026-03-13", status: "Absent"},
-    {id: "14", course: "Artificial Intelligent", date: "2026-03-14", status: "Absent"},
-    {id: "15", course: "Machine Learning", date: "2026-03-15", status: "Present"},
-    {id: "16", course: "English Course", date: "2026-03-16", status: "Absent"},
-    {id: "17", course: "Management Business Process", date: "2026-03-17", status: "Present"},
-    {id: "18", course: "Database System", date: "2026-03-18", status: "Present"},
-    {id: "19", course: "Mathematics", date: "2026-03-19", status: "Present"},
-    {id: "20", course: "Artificial Intelligent", date: "2026-03-20", status: "Present"},
-]
 
 export default Home;
 
@@ -207,5 +227,27 @@ const styles = StyleSheet.create({
         color: "red",
         fontWeight: "bold",
         marginLeft: 2
+    },
+
+    headerRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 10,
+    },
+
+    clockText: {
+        fontSize: 16,
+        fontWeight: 'bold',
+        color: '#007AFF',
+        fontVariant: ['tabular-nums'],
+    },
+
+    buttonActive: {
+        backgroundColor: "#007AFF",
+    },
+
+    buttonDisabled: {
+        backgroundColor: "#A0C4FF",
     },
 });
