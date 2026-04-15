@@ -1,5 +1,5 @@
-import React, { useState, useEffect} from "react";
-import  {View, Text, SafeAreaView, StyleSheet, TouchableOpacity, ScrollView, FlatList, Alert } from "react-native";
+import React, { useState, useEffect, useMemo, useRef} from "react";
+import  {View, Text, SafeAreaView, StyleSheet, TouchableOpacity, ScrollView, FlatList, Alert, TextInput } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
 
 const initialHistory = [
@@ -12,6 +12,17 @@ const Home = () => {
     const [historyData, setHistoryData] = useState(initialHistory);
     const [isCheckedIn, setIsCheckedIn] = useState(false);
     const [currentTime, setCurrentTime] = useState('Memuat jam ... ');
+    const [note, setNote] = useState('');
+    const noteInputRef = useRef(null); 
+
+    const attendanceStats = useMemo (() => {
+        console.log("Menghitung ulang statistik kehadiran...");
+
+        const presentCount = historyData.filter(item => item.status === 'Present').length;
+        const absentCount = historyData.filter(item => item.status === 'Absent').length;
+
+         return { totalPresent: presentCount, totalAbsent: absentCount };
+    }, [historyData]);
 
     useEffect(() => {
         const timer = setInterval(() => {
@@ -28,6 +39,12 @@ const Home = () => {
     const handleCheckIn = () => {
         if (isCheckedIn) {
             Alert.alert( "Perhatian", "Anda sudah melakukan Check In untuk kelas ini.");
+            return;
+        }
+
+        if (note.trim() === '') {
+            Alert.alert("Peringatan", "Catatan kehadiran wajib diisi!");
+            noteInputRef.current.focus();
             return;
         }
 
@@ -98,7 +115,16 @@ const Home = () => {
                     <Text>Mobile Programming</Text>
                     <Text>08:00 - 10:00</Text>
                     <Text>Lab 3</Text>
-                
+
+                    {!isCheckedIn && (
+                        <TextInput 
+                            ref={noteInputRef}
+                            style={styles.inputCatatan}
+                            placeholder="Tulis catatan (cth: Hadir lab)"
+                            value={note}
+                            onChangeText={setNote}
+                        />
+                    )}
 
                     <TouchableOpacity
                         style={[styles.button, isCheckedIn ? styles.buttonDisabled : styles.buttonActive]}
@@ -109,6 +135,17 @@ const Home = () => {
                         {isCheckedIn ? "CHECKED IN" : "CHECK IN"}
                         </Text>
                     </TouchableOpacity>
+                </View>
+
+                <View style={styles.statsCard}>
+                    <View style={styles.statBox}>
+                        <Text style={styles.statNumber}>{attendanceStats.totalPresent}</Text>
+                        <Text style={styles.statLabel}>Total Present</Text>
+                    </View>
+                    <View style={styles.statBox}>
+                        <Text style={[styles.statNumber, { color: 'red'}]}>{attendanceStats.totalAbsent}</Text>
+                        <Text style={styles.statLabel}>Total Absent</Text>
+                    </View>
                 </View>
 
                 <View style={styles.classCard}>
@@ -249,5 +286,38 @@ const styles = StyleSheet.create({
 
     buttonDisabled: {
         backgroundColor: "#A0C4FF",
+    },
+
+    inputCatatan: {
+        borderWidth: 1,
+        borderColor: '#ccc',
+        borderRadius: 8,
+        padding: 10,
+        marginTop:15,
+        backgroundColor: '#fafafa',
+    },
+
+    statsCard: {
+        flexDirection: 'row',
+        justifyContent: 'space-around',
+        backgroundColor: "white",
+        padding: 15,
+        borderRadius: 10,
+        marginBottom: 20,
+    },
+
+    statBox: {
+        alignItems: 'center',
+    },
+
+    statNumber: {
+        fontSize: 24,
+        fontWeight: 'bold',
+        color: 'green',
+    },
+
+    statLabel: {
+        fontSize: 14,
+        color: 'gray',
     },
 });
