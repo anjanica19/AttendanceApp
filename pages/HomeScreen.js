@@ -2,34 +2,20 @@ import React, { useState, useEffect, useMemo, useRef} from "react";
 import  {View, Text, SafeAreaView, StyleSheet, TouchableOpacity, ScrollView, FlatList, Alert, TextInput } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
 
-const initialHistory = [
-    { id: "1", course: "Web Programming", date: "2026-03-01", status: "Present" },
-    { id: "2", course: "Database System", date: "2026-03-02", status: "Present"},
-]
+const HomeScreen = () => {
 
-const Home = () => {
-
-    const [historyData, setHistoryData] = useState(initialHistory);
     const [isCheckedIn, setIsCheckedIn] = useState(false);
     const [currentTime, setCurrentTime] = useState('Memuat jam ... ');
     const [note, setNote] = useState('');
     const noteInputRef = useRef(null); 
 
     const attendanceStats = useMemo (() => {
-        console.log("Menghitung ulang statistik kehadiran...");
-
-        const presentCount = historyData.filter(item => item.status === 'Present').length;
-        const absentCount = historyData.filter(item => item.status === 'Absent').length;
-
-         return { totalPresent: presentCount, totalAbsent: absentCount };
-    }, [historyData]);
+        return { totalPresent: 12, totalAbsent: 2};
+    }, []);
 
     useEffect(() => {
         const timer = setInterval(() => {
-        const timeString = new Date().toLocaleTimeString('id-ID', {
-        hour: '2-digit', minute: '2-digit', second: '2-digit'
-        });
-        setCurrentTime(timeString);
+            setCurrentTime(new Date().toLocaleTimeString('id-ID'));
         }, 1000);
 
         return () => clearInterval(timer);
@@ -37,59 +23,16 @@ const Home = () => {
 
     // fungsi login absen
     const handleCheckIn = () => {
-        if (isCheckedIn) {
-            Alert.alert( "Perhatian", "Anda sudah melakukan Check In untuk kelas ini.");
-            return;
-        }
-
+        if (isCheckedIn) return Alert.alert("Perhatian", "Anda sudah Check In.");
         if (note.trim() === '') {
             Alert.alert("Peringatan", "Catatan kehadiran wajib diisi!");
             noteInputRef.current.focus();
             return;
         }
 
-        // 1.buat data presensi baru
-        const newAttendance = {
-        id: Date.now().toString(), // membuat ID unik dari timestamp
-        course: "Mobile Programming",
-        date: new Date().toLocaleDateString('id-ID'), 
-        status: "Present"
-        };
-
-        // 2.masukkan data baru ke urutan paling atas daftar history
-        setHistoryData([newAttendance, ... historyData]);
-
-        // 3.kunci tombol Check In
         setIsCheckedIn(true);
         Alert.alert("Sukses", `Berhasil Check In pada pukul ${currentTime}`);
     };
-
-     const renderItem = ({ item }) => (
-        <View style={styles.item}>
-
-            <View>
-                <Text style={styles.course}>{item.course}</Text>
-                <Text style={styles.date}>{item.date}</Text>
-            </View>
-           
-           <View style={styles.iconStatus}>
-            {item.status === "Present" 
-                ? <MaterialIcons name="check-circle" size={15} color="green" />
-                : <MaterialIcons name="cancel" size={15} color="red" />
-            }
-           
-
-            <Text
-            style={
-                item.status === "Present" 
-                ? styles.present 
-                : styles.absent
-                }
-            >{item.status}</Text>
-             </View>
-            
-        </View>
-    );
 
     return (
         <SafeAreaView style={styles.container}>
@@ -104,9 +47,9 @@ const Home = () => {
                         <MaterialIcons name="person" size={48} color="#555" />
                     </View>
                     <View>
-                    <Text style={styles.name}>Alyza Septia Anjani</Text>
-                    <Text>NIM : 0920240015</Text>
-                    <Text>Class : TRPL-2B</Text>
+                        <Text style={styles.name}>Alyza Septia Anjani</Text>
+                        <Text>NIM : 0920240015</Text>
+                        <Text>Class : TRPL-2B</Text>
                     </View>
                 </View>
 
@@ -132,7 +75,7 @@ const Home = () => {
                         disabled={isCheckedIn}
                     >
                         <Text style={styles.buttonText}>
-                        {isCheckedIn ? "CHECKED IN" : "CHECK IN"}
+                            {isCheckedIn ? "CHECKED IN" : "CHECK IN"}
                         </Text>
                     </TouchableOpacity>
                 </View>
@@ -147,23 +90,12 @@ const Home = () => {
                         <Text style={styles.statLabel}>Total Absent</Text>
                     </View>
                 </View>
-
-                <View style={styles.classCard}>
-                    <Text style={styles.subtitle}>Attendance History</Text>
-
-                    <FlatList
-                        data={historyData}
-                        keyExtractor={(item) => item.id}
-                        renderItem={renderItem}
-                        scrollEnabled={false}
-                    />
-                </View>
             </ScrollView>
         </SafeAreaView>
     );
 };
 
-export default Home;
+export default HomeScreen;
 
 const styles = StyleSheet.create({
     container: {
