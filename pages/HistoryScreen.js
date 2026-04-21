@@ -1,5 +1,5 @@
-import React, { useState} from "react";
-import { View, Text, SafeAreaView, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
+import React, { useEffect, useState} from "react";
+import { View, Text, SafeAreaView, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 
 const initialHistory = [
@@ -8,7 +8,51 @@ const initialHistory = [
 ];
 
 export default function HistoryScreen({ navigation }) {
-    const [historyData] = useState(initialHistory);
+    const [historyData, setHistoryData] = useState([]);
+    const [isLoading, setIsLoading] = useState(false);
+    const [isRefreshing, setIsRefreshing] = useState(false);
+    const [page, setPage] = useState(1)
+
+    const fetchAttendanceData = (isInitial = false) => {
+        if(isLoading) return;
+
+        setIsLoading(true);
+
+        setTimeout(() => {
+            const newItems = [];
+            const startIdx = isInitial ? 0 : historyData.length;
+
+            for (let i = 1; i <= 10; i++) {
+                newItems.push({
+                    id: (startIdx + i).toString(),
+                    course: `Mata Kuliah #${startIdx + i}`,
+                    date: "2026-04-14",
+                    status: i % 3 === 0 ? "Absent" : "Present",
+                    room: "Lab 3",
+                    lecturer: "Dosen Pengampu"
+                });
+            }
+
+            setHistoryData(isInitial ? newItems : [...historyData, ...newItems]);
+            setIsLoading(false);
+            setIsRefreshing(false);
+        }, 1500);
+    };
+
+    useEffect(() => {
+        fetchAttendanceData(true);
+    }, []);
+
+    const onRefresh = () => {
+        setIsRefreshing(true);
+        fetchAttendanceData(true);
+    };
+
+    const handleLoadMore = () => {
+        if (historyData.length >= 10 && !isLoading) {
+            fetchAttendanceData(false);
+        }
+    };
 
     const renderItem = ({ item }) => (
         <TouchableOpacity
@@ -26,6 +70,16 @@ export default function HistoryScreen({ navigation }) {
         </TouchableOpacity>
     );
 
+    const renderFooter = () => {
+        if (!isLoading) return null;
+        return (
+            <View styles={styles.footerLoader}>
+                <ActivityIndicator size="small" color="#0056A0" />
+                <Text style={styles.loaderText}>Memuat riwayat lama...</Text>
+            </View>
+        );
+    };
+
     return (
         <SafeAreaView style={styles.container}>
             <FlatList 
@@ -33,6 +87,19 @@ export default function HistoryScreen({ navigation }) {
                 keyExtractor={(item) => item.id}
                 renderItem={renderItem}
                 contentContainerStyle={styles.content}
+                refreshing={isRefreshing}
+                onRefresh={() => {
+                    setIsRefreshing(true);
+                    fetchAttendanceData(true);
+                }}
+                onEndReached={() => {
+                    if (historyData.length >= 10) fetchAttendanceData(false);
+                }}
+                onEndReachedThreshold={0.5}
+                ListFooterComponent={renderFooter}
+                ListEmptyComponent={
+                    !isLoading && <Text style={styles.emptyText}>Tidak ada riwayat.</Text>
+                }
             />
         </SafeAreaView>
     );
@@ -72,5 +139,21 @@ const styles = StyleSheet.create({
     absent: {
         color: "red",
         fontWeight: "bold"
+    },
+    footerLoader: {
+        paddingVertical: 20,
+        alignItems: 'center',
+        flexDirection: 'row',
+        justifyContent: 'center'
+    },
+    loaderText: {
+        marginLeft: 10,
+        color: '#666',
+        fontSize: 12
+    },
+    emptyText: {
+        textAlign: 'center',
+        marginTop: 50,
+        color: '#999'
     }
 });
